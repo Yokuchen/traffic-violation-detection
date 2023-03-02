@@ -26,9 +26,9 @@ video_path = "videos/red_light_4.mp4"
 OUTPUT_FILE = 'output.txt'
 
 def extractFrame(video_path, count):
-    cap = cv2.VideoCapture(video_path)  # video_path is the video being called
-    cap.set(1, count)  # Where count is the frame you want
-    ret, frame = cap.read()  # Read the frame
+    cap = cv2.VideoCapture(video_path)  
+    cap.set(1, count)  
+    ret, frame = cap.read()  
     cv2.imwrite("images/frame%d.jpg" % count, frame) 
 
 def build_model(cuda, model_p):
@@ -269,21 +269,10 @@ object_tracker = DeepSort(max_age=5,
 
 # select areas
 _, img = capture.read()
-cv2.imshow('selection', img)
-print("select 4 points (clockwise), press any key to exit")
-cv2.setMouseCallback('selection', click_event)
- # wait for a key to be pressed to exit
-cv2.waitKey(0)
-
- # close the window
-cv2.destroyAllWindows()
-
-print(point_matrix)
-wait_zone = [point_matrix[0], point_matrix[1], point_matrix[2], point_matrix[3]]
+wait_zone = []
 
 with open(os.getcwd() +'//output//'+ OUTPUT_FILE,'w+') as output:
     output.writelines("Traffic Violation Detection Report\n\n")
-
 
 # detect on frame
 while True:
@@ -324,9 +313,15 @@ while True:
         if class_ids[i] == 0:
             cur_tuple.append((boxes[i], scores[i], class_ids[i]))
 
+        # crosswalks
+        if class_ids[i] == 1:
+            wait_zone.append([[int(boxes[i][0]), int(boxes[i][1]) + int(boxes[i][3])], 
+                         [int(boxes[i][0] + boxes[i][2]), int(boxes[i][1] + boxes[i][3])], 
+                         [int(boxes[i][0] + boxes[i][2]), int(boxes[i][1])], 
+                         [int(boxes[i][0]), int(boxes[i][1])]])
+
         # traffic lights
         if class_ids[i] == 3:
-            # print((int(boxes[i][1]), int(boxes[i][1] + boxes[i][3])))
             t_signal = frame[
                        int(boxes[i][1]):int(boxes[i][1] + boxes[i][3]),
                        int(boxes[i][0]):int(boxes[i][0] + boxes[i][2])]
@@ -378,8 +373,6 @@ while True:
         ltrb = track.to_ltrb()
 
         bbox = ltrb
-        # print(int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3]))
-        # xyl xyr
         x_track = int((int(bbox[0]) + int(bbox[2])) / 2)
         y_track = int((int(bbox[1]) + int(bbox[3])) / 2)
         cv2.circle(frame, (x_track, y_track), radius=0, color=(255, 0, 0),
@@ -390,10 +383,11 @@ while True:
                                      x_track, y_track, x_track, y_track, -1, 0]
             presented.append(int(track_id))
 
-        if utils.point_in_polygon(travel[int(track_id)], wait_zone):
+        if utils.point_in_polygon(travel[int(track_id)], wait_zone[0]):
             print(travel[int(track_id)])
             print("in zone")
-            cv2.circle(frame, (x_track, y_track), radius=0, color=(0, 0, 255), thickness=7)
+            cv2.circle(frame, (x_track, y_track), radius=0, color=(0, 0, 255),
+                       thickness=7)
 
         if check_pos_count > (frame_rate / 10):
             if int(track_id) in presented:
@@ -441,7 +435,7 @@ while True:
 
         if signal == 1:
 
-            if utils.point_in_polygon(travel[int(track_id)], wait_zone) and\
+            if utils.point_in_polygon(travel[int(track_id)], wait_zone[0]) and\
                     travel[int(track_id)][5] > 180:
                 # print(track_id)
 
@@ -484,10 +478,8 @@ while True:
 
             count += 1
 
-
         else:
             vehicle_color = (255, 255, 255)
-
         cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])),
                       (int(bbox[2]), int(bbox[3])), vehicle_color, 2)
         cv2.putText(frame, "ID:" + str(track_id) + " | Dir:" +
@@ -495,7 +487,6 @@ while True:
                     (int(bbox[0]), int(bbox[1] - 10)),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.9, (0, 255, 0), 2)
-        
         if travel[int(track_id)][5] != 1:
             arr_start_point = (int((x_track + travel[int(track_id)][3]) / 2),
                                int((y_track + travel[int(track_id)][4]) / 2))
@@ -531,11 +522,6 @@ while True:
         cx = int((x + x + w) / 2)
         cy = int((y + y + h) / 2)
         center_points_cur_frame.append((cx, cy))
-        # print("FRAME N°", count, " ", x, y, w, h)
-
-        # cv2.circle(frame, (cx, cy), 5, (0, 0, 255), -1)
-        # cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        # cv2.circle(frame, (x, y), radius=0, color=(0, 0, 255), thickness=-1)
 
     cv2.putText(frame, f'Frame: {int(frame_count)}', (20, 70),
                 cv2.FONT_HERSHEY_SIMPLEX,
@@ -544,7 +530,7 @@ while True:
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1.5, (0, 0, 255), 2)
     
-    cv2.polylines(frame, [np.array(wait_zone, np.int32)], True,
+    cv2.polylines(frame, [np.array(wait_zone[0], np.int32)], True,
                   (15, 220, 10), 3)
     cv2.imshow('img', frame)
     vidout.write(frame)
