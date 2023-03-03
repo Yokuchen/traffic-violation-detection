@@ -247,6 +247,8 @@ check_pos_count = 0
 frame_rate = capture.get(cv2.CAP_PROP_FPS)
 
 outputStr = []
+totalViolations = 0
+trackIdList = []
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -537,10 +539,19 @@ while True:
         # cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         # cv2.circle(frame, (x, y), radius=0, color=(0, 0, 255), thickness=-1)
 
+    temp = redlight_run.copy()
+    for id in temp:
+        if int(id) not in trackIdList:
+            trackIdList.append(int(id))
+        else:
+            temp.remove(int(id))
+    totalViolations += len(temp)
+
     cv2.putText(frame, f'Frame: {int(frame_count)}', (20, 70),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1.5, (0, 255, 0), 2)
-    cv2.putText(frame, f'Violation Num: {len(redlight_run)}', (350, 70),
+    
+    cv2.putText(frame, f'Violation Num: {totalViolations}', (350, 70),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1.5, (0, 0, 255), 2)
     
