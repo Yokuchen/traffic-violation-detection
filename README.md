@@ -17,3 +17,4 @@ Detect traffic violations with CCTV footage
 - torchreid==0.2.5
 - torchvision==0.16.1
 
+*Animation data made with Blender
