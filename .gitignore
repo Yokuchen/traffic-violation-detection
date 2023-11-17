@@ -2,5 +2,7 @@ dnn_model/v4
 dnn_model/v5m
 *.mp4
 *.mov
+.idea
+__pycache__
 
 

@@ -18,7 +18,7 @@ NMS_THRESHOLD = 0.4
 CONFIDENCE_THRESHOLD = 0.4
 model_path = "dnn_model/v5m/yolov5m.onnx"
 classes_path = "dnn_model/v5m/classes.txt"
-video_path = "dataset/sfm_2.mp4"
+video_path = "dataset/sfm_3.mp4"
 
 
 def build_model(cuda, model_p):
@@ -374,8 +374,8 @@ while True:
             presented.append(int(track_id))
 
         if utils.point_in_polygon(travel[int(track_id)], wait_zone):
-            print(travel[int(track_id)])
-            print("in zone")
+            # print(travel[int(track_id)])
+            # print("in zone")
             cv2.circle(frame, (x_track, y_track), radius=0, color=(0, 0, 255),
                        thickness=7)
 
